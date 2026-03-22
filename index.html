@@ -65,7 +65,7 @@ function capture() {
   preview.src = imageData;
   statusText.innerText = "Sending image... ⏳";
 
-  fetch("https://api.prasantagautam.com.np/upload", {
+  fetch("https://diesel-critical-discharge-insulin.trycloudflare.com/upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ image: imageData })
