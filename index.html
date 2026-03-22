@@ -44,6 +44,7 @@ let video = document.getElementById("video");
 let preview = document.getElementById("preview");
 let statusText = document.getElementById("status");
 
+// Start webcam
 async function startCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -51,9 +52,11 @@ async function startCamera() {
     statusText.innerText = "Camera started ✅";
   } catch (err) {
     statusText.innerText = "Camera permission denied ❌";
+    console.error(err);
   }
 }
 
+// Capture and upload
 function capture() {
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
@@ -61,18 +64,35 @@ function capture() {
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0);
 
-  const imageData = canvas.toDataURL("image/png");
-  preview.src = imageData;
-  statusText.innerText = "Sending image... ⏳";
+  // Show preview
+  canvas.toBlob(blob => {
+    preview.src = URL.createObjectURL(blob);
+    statusText.innerText = "Sending image... ⏳";
 
-  fetch("https://diesel-critical-discharge-insulin.trycloudflare.com/upload", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ image: imageData })
-  })
-  .then(res => res.json())
-  .then(data => { statusText.innerText = "Image sent ✅"; })
-  .catch(err => { statusText.innerText = "Error sending image ❌"; console.error(err); });
+    // Prepare multipart/form-data
+    const formData = new FormData();
+    formData.append("file", blob, "capture.png");
+
+    // Replace with your Cloudflare Tunnel URL
+    fetch("https://your-tunnel-subdomain.trycloudflare.com/upload", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.status === "success") {
+        statusText.innerText = "Image sent ✅";
+      } else {
+        statusText.innerText = "Upload failed ❌";
+        console.error("Server response:", data);
+      }
+    })
+    .catch(err => {
+      statusText.innerText = "Error sending image ❌";
+      console.error("Fetch error:", err);
+    });
+
+  }, "image/png");
 }
 </script>
 
